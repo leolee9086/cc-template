@@ -53,7 +53,8 @@
         v-model="模板添加方向"
         :inactive-color="'var(--b3-card-success-color)'"
         :active-color="'var(--b3-card-error-color)'"
-
+        :inactive-value="'按钮上方'"
+        :active-value="'按钮下方'"
         :inactive-text="'按钮上方'"
         :active-text="'按钮下方'"
         ></el-switch>
@@ -72,7 +73,7 @@
         components: componentsList,
         data() {
             return {
-                模板添加方向:"",
+                模板添加方向:true,
                 思源伺服ip:"",
                 主界面: "",
                 当前块id: "",
@@ -102,7 +103,6 @@
         },
         methods: {
             渲染模板:async function(){
-                let 插入目标 = this.$挂件自身元素().nextElementSibling   
                 let 临时属性数组 = await this.$以id数组通过sql形式获取思源块信息数组([this.$挂件自身元素().getAttribute("data-node-id")])
                     let 挂件自身属性 = 临时属性数组[0]
                      let 当前文档id = 挂件自身属性["root_id"] 
@@ -110,10 +110,17 @@
                     id:当前文档id,
                     path:this.当前模板路径
                 }
+                console.log(this.$挂件自身元素().parentElement)
+
                 let templateres =  await 渲染模板(this.思源伺服ip,this.apitoken,templatedata) 
                 let templatedom = templateres.data.content
-                let el = this.模板添加方向?this.$挂件自身元素():this.$挂件自身元素().previousElementSibling  
+                let el = this.模板添加方向=="按钮下方"?this.$挂件自身元素():this.$挂件自身元素().previousElementSibling  
                 let 插入位置id= el?el.getAttribute("data-node-id"):当前文档id
+                if(this.$挂件自身元素().parentElement.getAttribute("class")=="li"&&!this.$挂件自身元素().previousElementSibling.previousElementSibling&&this.模板添加方向=="按钮上方"){
+                    插入位置id=this.$挂件自身元素().parentElement.parentElement.previousElementSibling.getAttribute("data-node-id")
+                    console.log(this.$挂件自身元素().parentElement.parentElement.previousElementSibling)
+                }
+                if (!插入位置id){插入位置id=this.$挂件自身元素().getAttribute("data-node-id")}
                 let data  = {
                     "dataType": "dom",
                     "data": templatedom,
@@ -125,7 +132,7 @@
             
             获取模板列表:async function (){
                 this.计算挂件尺寸()
-
+                
                 let 模板列表 =  []
                 this.思源伺服ip = window.location.host
                 模板数据 = await 以关键词搜索模板(this.思源伺服ip,this.apitoken,"")
@@ -140,8 +147,8 @@
             
             计算挂件尺寸() {
                 this.当前模板路径 = this.$挂件自身元素().getAttribute("custom-template")||""
-
-            let 挂件iframe元素 = window.frameElement;
+                this.模板添加方向 = this.$挂件自身元素().getAttribute("custom-template-position")
+             let   挂件iframe元素= window.frameElement
             挂件iframe元素.style.backgroundColor="transparent"
 
             console.log(window.frameElement);
@@ -181,7 +188,17 @@
                     
                     }
                 },
-            
+            模板添加方向:{
+                async handler (val){
+                    if(val){
+                        let id = this.$挂件自身元素().getAttribute("data-node-id")
+                        this.$挂件自身元素().setAttribute("custom-template-position", val)
+                        await 设置思源块属性(this.思源伺服ip, this.apitoken, id, "custom-template-position", val)
+                    }
+                    
+                    },
+                
+            }
            
         }
     }
