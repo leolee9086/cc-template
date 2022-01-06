@@ -6,12 +6,7 @@
     <script src="/widgets/cc-baselib/static/vue.js"></script>
     <script src="/widgets/cc-baselib/static/element-ui/index.js"></script>
     <script src="/widgets/cc-baselib/static/axios.min.js"></script>
-    <script src="/widgets/cc-baselib/static/vue-clipboard.min.js"></script>
-    <script src="/widgets/cc-baselib/static/vue-router.js"></script>
     <script src="/widgets/cc-baselib/static/httpVueLoader.js"></script>
-    <script src="/widgets/cc-baselib/static/jszip.min.js"></script>
-    <script src="/widgets/cc-baselib/static/Sortable.min.js"></script>
-    <script src="/widgets/cc-baselib/static/vuedraggable.umd.min.js"></script>
 
     <script src="/widgets/cc-baselib/src/commonFunctionsForSiyuan.js"></script>
     <script src="/widgets/cc-baselib/src/siYuanApi.js"></script>
@@ -51,7 +46,7 @@
             </el-option>
         </el-select>
         <el-divider v-if="显示设置"></el-divider>
-        <el-tooltip content="作者的推荐码是N2p37W6">
+        
         <el-switch
         v-if="显示设置"
 
@@ -62,12 +57,16 @@
         :inactive-text="'按钮上方'"
         :active-text="'按钮下方'"
         ></el-switch>
-    </el-tooltip>
+        <div         v-if="显示设置"
+        style="color:transparent !important;background-color: transparent;" >
+        <div style="color:transparent !important;background-color: transparent;">知行合一 经世致用</div>
+        作者的推荐码是N2p37W6
+        </div>
+   
     </div>
 </body>
 <script>
     Vue.use(httpVueLoader);
-    Vue.use(vuedraggable);
     var vm = new Vue({
         el: "#app",
         components: componentsList,
@@ -80,12 +79,7 @@
                 模板列表:[],
                 挂件自身元素: "",
                 apitoken: "",
-                是否显示基础属性: true,
-                是否显示原始属性名: false,
-                是否显示属性原始值: false,
-                是否显示自定义属性: true,
-                新属性: { "type": "原始文本", "name": "newattr", "label": "newattr", "value": "default" },
-                属性类型: ["图片", "文本", "块链接", "超链接", "原始文本", "附件"],
+                
                 书签列表: "",
                 当前属性源: "当前文档",
                 属性源选项数组: ["当前编辑块", "当前文档", "挂件前一个块"],
