@@ -120,13 +120,36 @@
                     插入位置id=this.$挂件自身元素().parentElement.parentElement.previousElementSibling.getAttribute("data-node-id")
                     console.log(this.$挂件自身元素().parentElement.parentElement.previousElementSibling)
                 }
-                if (!插入位置id){插入位置id=this.$挂件自身元素().getAttribute("data-node-id")}
+                if (!插入位置id){插入位置id=this.$挂件自身元素().getAttribute("data-node-id")||this.挂件自身元素.getAttribute("data-node-id")||当前文档id}
+                let 插入确认 =  await this.$以id数组通过sql形式获取思源块信息数组([插入位置id])
+                if(插入确认[0]){
+
+                    if
+                    (this.模板添加方向!="按钮下方"){
                 let data  = {
                     "dataType": "dom",
-                    "data": templatedom,
+                    "data": '<div data-node-id=\"20220106235242-t0ogxed\" data-type=\"NodeParagraph\" class=\"p\"><div contenteditable=\"true\" spellcheck=\"false\"><wbr></div><div class=\"protyle-attr\"></div></div>',
                     "previousID": 插入位置id
                 }
                  await 插入块(this.思源伺服ip,this.apitoken,data)
+                 let realdata  = {
+                    "dataType": "dom",
+                    "data": templatedom,
+                    "previousID": "20220106235242-t0ogxed"
+                }
+                 await 插入块(this.思源伺服ip,this.apitoken,realdata)
+                 await 删除块(this.思源伺服ip,this.apitoken,"20220106235242-t0ogxed")
+                 }else{
+                 let realdata  = {
+                    "dataType": "dom",
+                    "data": templatedom,
+                    "previousID":插入位置id
+                }
+                await 插入块(this.思源伺服ip,this.apitoken,realdata)
+
+                 }
+                }
+                else{console.log(插入位置id)}
                  this.计算挂件尺寸()
             },
             
