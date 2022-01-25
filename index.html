@@ -85,6 +85,7 @@
             }
         },
         mounted() {
+
             this.思源主界面 = window.parent.document
             this.思源伺服ip = window.location.host
             this.$获取思源主界面主题(this.思源主界面)
@@ -95,7 +96,7 @@
             setInterval(this.移动浮窗, 5);
 
             this.挂载事件()
-
+            this.初始化()
 
         },
         methods: {
@@ -423,7 +424,8 @@
         computed: {
             当前模板名称() {
                 let template = this.当前模板路径
-                return template.slice(template.lastIndexOf("\\") + 1).split(".")[0]
+                if(template){
+                return template.slice(template.lastIndexOf("\\") + 1).split(".")[0]}
             }
         },
         watch: {
