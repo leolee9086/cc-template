@@ -13,57 +13,43 @@
     <script src="/widgets/cc-baselib/src/componentsList.js"></script>
 
     <link rel="stylesheet" href="/widgets/cc-baselib/static/element-ui/theme-chalk/index.css">
-    <link id='themeDefaultStyle'>
+    <link id="baseStyle" rel="stylesheet" type="text/css" href="base.a64383f35f3d0b478d33fromsiyuan.css">
 
-<body >
+    <link id='themeDefaultStyle'>
+    <script src="/appearance/icons/material/icon.js?v=1.6.2" async id="iconScript"></script>
+    <script src="/appearance/emojis/twitter-emoji.js?v=1.6.2" async="" id="emojiScript"></script>
+
+<body>
     <div id="app" @mousemove="计算挂件尺寸()" @keydown="计算挂件尺寸()">
         <el-button v-if="挂件自身元素" @click="渲染模板()">+{{当前模板名称}}</el-button>
         <span class="el-icon-edit" v-if="!显示设置" @click="显示设置=!显示设置"></span>
         <span class="el-icon-check" v-if="显示设置" @click="显示设置=!显示设置"></span>
 
         <span v-if="!挂件自身元素">ip可能不对,尝试重新插入挂件或者干脆用iframe吧</span>
+        <el-tooltip content="刷新模板预览">
+            <span class=el-icon-refresh @click="刷新模板dom"></span>
+        </el-tooltip>
         <el-divider v-if="显示设置"></el-divider>
-        <el-select 
-        filterable
-        v-if="显示设置"
-        v-model="当前模板路径" 
-        @focus="获取模板列表();计算挂件尺寸()"
-        @blur="计算挂件尺寸()"
-        @visible-change	="计算挂件尺寸()"
-        @mousemove="计算挂件尺寸()"
-       :append-to-body="false"
-        >
+        <el-select filterable v-if="显示设置" v-model="当前模板路径" @focus="获取模板列表();计算挂件尺寸()" @blur="计算挂件尺寸()"
+            @visible-change="计算挂件尺寸()" @mousemove="计算挂件尺寸()" :append-to-body="false">
 
-            <el-option
-
-            v-for ="(template,i) in 模板列表"
-            :value= "template.path"
-            :label="template.name"
-            style="top:50 px"
-            >
-            <span   @mousemove="计算挂件尺寸()" style="width:100%;height:100%;"
-            >{{template.name}} </span>
+            <el-option v-for="(template,i) in 模板列表" :value="template.path" :label="template.name" style="top:50 px">
+                <span @mousemove="计算挂件尺寸()" style="width:100%;height:100%;">{{template.name}} </span>
             </el-option>
         </el-select>
-        <el-divider v-if="显示设置"></el-divider>
-        
-        <el-switch
-        v-if="显示设置"
+        <el-switch v-if="显示设置" v-model="模板添加方向" :inactive-color="'var(--b3-card-success-color)'"
+            :active-color="'var(--b3-card-error-color)'" :inactive-value="'按钮上方'" :active-value="'按钮下方'"
+            :inactive-text="'按钮上方'" :active-text="'按钮下方'"></el-switch>
 
-        v-model="模板添加方向"
-        :inactive-color="'var(--b3-card-success-color)'"
-        :active-color="'var(--b3-card-error-color)'"
-        :inactive-value="'按钮上方'"
-        :active-value="'按钮下方'"
-        :inactive-text="'按钮上方'"
-        :active-text="'按钮下方'"
-        ></el-switch>
-        <div         v-if="显示设置"
-        style="color:transparent !important;background-color: transparent;" >
-        <div style="color:transparent !important;background-color: transparent;">知行合一 经世致用</div>
-        作者的推荐码是N2p37W6
+
+        <el-divider v-if="显示设置"></el-divider>
+
+        <div v-if="显示设置" class="protyle-wysiwyg protyle-wysiwyg--attr" v-if="当前模板dom" v-html="当前模板dom"></div>
+        <div v-if="显示设置" style="color:transparent !important;background-color: transparent;">
+            <div style="color:transparent !important;background-color: transparent;">知行合一 经世致用</div>
+            作者的推荐码是N2p37W6
         </div>
-   
+
     </div>
 </body>
 <script>
@@ -73,156 +59,325 @@
         components: componentsList,
         data() {
             return {
-                模板添加方向:true,
-                思源伺服ip:"",
-                主界面: "",
+                模板添加方向: true,
+                思源伺服ip: "",
+                思源主界面: "",
                 当前块id: "",
-                模板列表:[],
+                模板列表: [],
                 挂件自身元素: "",
                 apitoken: "",
-                
+                当前模板dom: "",
                 书签列表: "",
                 当前属性源: "当前文档",
                 属性源选项数组: ["当前编辑块", "当前文档", "挂件前一个块"],
                 当前块属性: {},
-                当前模板路径:"",
-                展开:false,
-                显示设置:false,
+                当前模板路径: "",
+                展开: false,
+                显示设置: false,
+                模板预览列表: [],
+                动态渲染预览: false,
+                开始移动浮窗: false,
+                鼠标在链接内:false,
+                链接id:""
             }
         },
         mounted() {
-            this.主界面 = window.parent.document
+            this.思源主界面 = window.parent.document
             this.思源伺服ip = window.location.host
-            this.$获取思源主界面主题(this.主界面)
+            this.$获取思源主界面主题(this.思源主界面)
             this.当前属性源 = this.$html转义(this.当前属性源)
             this.挂件自身元素 = this.$挂件自身元素()
-            window.onload=this.计算挂件尺寸()
+            window.onload = this.计算挂件尺寸()
             this.获取模板列表()
-            
-
+            setInterval(this.移动浮窗, 5);
         },
         methods: {
-            渲染模板:async function(){
+            移动浮窗: function () {
+                let that = this;
+                if (that.开始移动浮窗) {
+                    let id = that.链接id;
+                    if (id) {
+                        id = id.replace("((", "").replace("))", "");
+                        let panel = that.思源主界面.querySelector(`.block__popover[data-oid="${id}"]`);
+                        if (panel) {
+                            panel.style.top = that.Y + 16 + "px";
+                            panel.style.left = that.X - (panel.offsetWidth / 2 || 0) + "px";
+                            panel.style.display = "block";
+                            that.开始移动浮窗 = false;
+                            that.链接id=""
+                        }
+                    }
+                }
+            },
+            渲染模板: async function () {
                 let 临时属性数组 = await this.$以id数组通过sql形式获取思源块信息数组([this.$挂件自身元素().getAttribute("data-node-id")])
-                    let 挂件自身属性 = 临时属性数组[0]
-                     let 当前文档id = 挂件自身属性["root_id"] 
-                let templatedata={
-                    id:当前文档id,
-                    path:this.当前模板路径
+                let 挂件自身属性 = 临时属性数组[0]
+                let 当前文档id = 挂件自身属性["root_id"]
+                let templatedata = {
+                    id: 当前文档id,
+                    path: this.当前模板路径
                 }
                 console.log(this.$挂件自身元素().parentElement)
-
-                let templateres =  await 渲染模板(this.思源伺服ip,this.apitoken,templatedata) 
+                let templateres = await 渲染模板(this.思源伺服ip, this.apitoken, templatedata)
                 let templatedom = templateres.data.content
-                let el = this.模板添加方向=="按钮下方"?this.$挂件自身元素():this.$挂件自身元素().previousElementSibling  
-                let 插入位置id= el?el.getAttribute("data-node-id"):当前文档id
-                if(this.$挂件自身元素().parentElement.getAttribute("class")=="li"&&!this.$挂件自身元素().previousElementSibling.previousElementSibling&&this.模板添加方向=="按钮上方"){
-                    插入位置id=this.$挂件自身元素().parentElement.parentElement.previousElementSibling.getAttribute("data-node-id")
-                    console.log(this.$挂件自身元素().parentElement.parentElement.previousElementSibling)
-                }
-                if (!插入位置id){插入位置id=this.$挂件自身元素().getAttribute("data-node-id")||this.挂件自身元素.getAttribute("data-node-id")||当前文档id}
-                let 插入确认 =  await this.$以id数组通过sql形式获取思源块信息数组([插入位置id])
-                if(插入确认[0]){
 
-                    if
-                    (this.模板添加方向!="按钮下方"){
-                let data  = {
-                    "dataType": "dom",
-                    "data": '<div data-node-id=\"20220106235242-t0ogxed\" data-type=\"NodeParagraph\" class=\"p\"><div contenteditable=\"true\" spellcheck=\"false\"><wbr></div><div class=\"protyle-attr\"></div></div>',
-                    "previousID": 插入位置id
+                if (!templatedom) {
+                    return null
                 }
-                 await 插入块(this.思源伺服ip,this.apitoken,data)
-                 let realdata  = {
-                    "dataType": "dom",
-                    "data": templatedom,
-                    "previousID": "20220106235242-t0ogxed"
-                }
-                 await 插入块(this.思源伺服ip,this.apitoken,realdata)
-                 await 删除块(this.思源伺服ip,this.apitoken,"20220106235242-t0ogxed")
-                 }else{
-                 let realdata  = {
-                    "dataType": "dom",
-                    "data": templatedom,
-                    "previousID":插入位置id
-                }
-                await 插入块(this.思源伺服ip,this.apitoken,realdata)
+                let el = this.模板添加方向 == "按钮下方" ? this.$挂件自身元素() : this.$挂件自身元素().previousElementSibling
+                let 插入位置id = el ? el.getAttribute("data-node-id") : ""
+                if (!插入位置id) {
+                    let id = this.挂件自身元素.getAttribute("data-node-id")
+                    let res = await this.$以id数组通过sql形式获取思源块信息数组([id])
+                    插入位置id = res[0]["parent_id"] || res[0]["root_id"]
+                    let 插入确认 = await this.$以id数组通过sql形式获取思源块信息数组([插入位置id])
+                    if (插入确认[0]) {
+                        if (this.模板添加方向 != "按钮下方") {
 
-                 }
+                            let realdata = {
+                                "dataType": "dom",
+                                "data": templatedom,
+                                "parentID": 插入位置id
+                            }
+                            await 插入前置子块(this.思源伺服ip, this.apitoken, realdata)
+                        }
+                    }
+                    this.计算挂件尺寸()
+
+                    return null
                 }
-                else{console.log(插入位置id)}
-                 this.计算挂件尺寸()
-            },
-            
-            获取模板列表:async function (){
+
+                let 插入确认 = await this.$以id数组通过sql形式获取思源块信息数组([插入位置id])
+                if (插入确认[0]) {
+                    if (this.模板添加方向 != "按钮下方") {
+
+                        let realdata = {
+                            "dataType": "dom",
+                            "data": templatedom,
+                            "previousID": 插入位置id
+                        }
+                        await 插入块(this.思源伺服ip, this.apitoken, realdata)
+                    } else {
+                        let realdata = {
+                            "dataType": "dom",
+                            "data": templatedom,
+                            "previousID": 插入位置id
+                        }
+                        await 插入块(this.思源伺服ip, this.apitoken, realdata)
+
+                    }
+                }
+                else { console.log(插入位置id) }
                 this.计算挂件尺寸()
-                
-                let 模板列表 =  []
+            },
+
+            获取模板列表: async function () {
+                this.计算挂件尺寸()
+
+                let 模板列表 = []
                 this.思源伺服ip = window.location.host
-                模板数据 = await 以关键词搜索模板(this.思源伺服ip,this.apitoken,"")
-                this.模板列表=模板数据.data.blocks
-                this.模板列表.forEach(template=>
-                template.name = template.path.slice(template.path.lastIndexOf("\\")+1).split(".")[0]
+                模板数据 = await 以关键词搜索模板(this.思源伺服ip, this.apitoken, "")
+                模板列表 = 模板数据.data.blocks
+                模板列表.forEach(template =>
+                    template.name = template.path.slice(template.path.lastIndexOf("\\") + 1).split(".")[0]
                 )
-                console.log(模板列表)
-                this.当前模板路径= this.当前模板路径||this.模板列表[0]?this.模板列表[0].path:""
+                this.模板列表 = 模板列表
+                this.当前模板路径 = this.当前模板路径 || this.模板列表[0] ? this.模板列表[0].path : ""
                 this.计算挂件尺寸()
             },
-            
-            计算挂件尺寸() {
-                this.当前模板路径 = this.$挂件自身元素().getAttribute("custom-template")||""
-                this.模板添加方向 = this.$挂件自身元素().getAttribute("custom-template-position")
-             let   挂件iframe元素= window.frameElement
-            挂件iframe元素.style.backgroundColor="transparent"
-
-            console.log(window.frameElement);
-            let el = window.document.querySelector(".el-select-dropdown")
-            let eldisplay=el?el.style.display:false
-            console.log(el)
-            eldisplay==false||eldisplay=="none"?挂件iframe元素.style.height="60px"
-            :挂件iframe元素.style.height =  "450px";
-            if (!this.显示设置){
-                let button = window.document.querySelector(".el-button")
-
-                挂件iframe元素.style.width=button?button.offsetWidth+60+"px":"200px";
-            }
-            if (this.显示设置&&(!eldisplay||eldisplay=="none")){
-                
-                挂件iframe元素.style.height= 挂件iframe元素.offsetWidth>640?挂件iframe元素.style.height:"450px"
-            }
+            刷新模板dom: async function () {
+                let res = await this.渲染模板dom(this.当前模板路径)
+                this.当前模板dom = res.data.content
+                this.挂载事件()
             },
-         
-            
-            
+            渲染模板dom: async function (模板) {
+                let 临时属性数组 = await this.$以id数组通过sql形式获取思源块信息数组([this.$挂件自身元素().getAttribute("data-node-id")])
+                let 挂件自身属性 = 临时属性数组[0]
+                let 当前文档id = 挂件自身属性["root_id"]
+
+                let templatedata = {
+                    id: 当前文档id,
+                    path: 模板
+                }
+                return await 渲染模板(this.思源伺服ip, this.apitoken, templatedata)
+
+            },
+            计算挂件尺寸() {
+                let button = window.document.querySelector(".el-button")
+                let main = window.document.querySelector("#app")
+
+                this.当前模板路径 = this.$挂件自身元素().getAttribute("custom-template") || ""
+                this.模板添加方向 = this.$挂件自身元素().getAttribute("custom-template-position")
+                let 挂件iframe元素 = window.frameElement
+                挂件iframe元素.style.backgroundColor = "transparent"
+
+                console.log(window.frameElement);
+                let el = window.document.querySelector(".el-select-dropdown")
+                let eldisplay = el ? el.style.display : false
+                console.log(el)
+                eldisplay == false || eldisplay == "none" ? 挂件iframe元素.style.height = "40px"
+                    : 挂件iframe元素.style.height = "450px";
+                if (!this.显示设置 && button) {
+                    挂件iframe元素.style.width = button.offsetWidth > 140 ? button.offsetWidth + 60 + "px" : "200px";
+                    挂件iframe元素.style.height = button.offsetHeight + 4 + "px"
+                }
+                if (this.显示设置) {
+                    挂件iframe元素.style.height = main.offsetHeight + "px"
+                }
+            },
+            挂载事件: async function () {
+                this.块链接挂载事件()
+                await this.刷新嵌入块()
+            },
+            刷新嵌入块: async function () {
+
+            },
+            块链接挂载事件() {
+                window.addEventListener("click", this.打开块链接)
+                window.addEventListener("mouseover", this.打开浮窗)
+
+            },
+            打开块链接(event) {
+                if (event.target) {
+                    let id = event.target.getAttribute("data-id")
+                    id ? this.$窗口内打开思源块(id) : null
+                }
+            },
+            打开浮窗($event) {
+                let that = this;
+                this.开始移动浮窗 = true;
+                this.鼠标在链接内 = event.target.getAttribute("data-id") ? true : false;
+                if (!this.$挂件模式()) {
+                    return null;
+                }
+                let 挂件自身元素 =
+                    that.$root.挂件自身元素 || window.frameElement || window.document.body;
+                let 挂件坐标 = 挂件自身元素
+                    ? that.获取元素视图坐标(挂件自身元素)
+                    : that.获取元素视图坐标(window.frameElement);
+                that["X"] = $event.clientX + 挂件坐标.X;
+                that["Y"] = $event.clientY + 挂件坐标.Y;
+                if (that.鼠标在链接内) {
+                    let id = event.target.getAttribute("data-id");
+                    this.链接id =  id
+                    id = id.replace("((", "").replace("))", "");
+                    let 虚拟链接 = that.思源主界面.createElement("span");
+                    虚拟链接.setAttribute("data-type", "block-ref");
+                    虚拟链接.setAttribute("data-id", id);
+                    let 临时目标 = that.思源主界面.querySelector(
+                        ".protyle-wysiwyg div[data-node-id] div[contenteditable]"
+                    );
+                    // console.log(临时目标)
+                    临时目标.appendChild(虚拟链接);
+                    虚拟链接.style.position = "fixed";
+                    let 挂件坐标 = that.获取元素绝对坐标(that.$root.挂件自身元素);
+                    虚拟链接.style.top = $event.clientY + 挂件坐标.Y;
+                    虚拟链接.style.left = $event.clientX + 挂件坐标.X;
+                    let 点击事件 = that.思源主界面.createEvent("MouseEvents");
+                    点击事件.initMouseEvent(
+                        "mouseover",
+                        true,
+                        false,
+                        window.parent,
+                        1,
+                        100,
+                        100,
+                        100,
+                        100,
+                        false,
+                        false,
+                        false,
+                        false,
+                        0,
+                        null
+                    );
+                    setTimeout(() => {
+                        虚拟链接.dispatchEvent(点击事件);
+                        虚拟链接.remove();
+                    }, 300);
+                }
+            },
+            获取元素绝对坐标(element) {
+                element = element
+                    ? element
+                    : window.frameElement.parentElement || window.frameElement;
+                var result = { left: element.offsetLeft, top: element.offsetTop };
+                element.offsetParent ? (element = element.offsetParent) : null;
+                while (element) {
+                    result["left"] += element.offsetLeft;
+                    result["top"] += element.offsetTop;
+                    element = element.offsetParent;
+                }
+                return result;
+            },
+            获取元素视图坐标(element) {
+                let that = this;
+                var scrollTop = that.获取文档元素(this.$挂件自身元素()).scrollTop;
+                var scrollLeft = that.获取文档元素(this.$挂件自身元素()).scrollLeft;
+                var absolutePosi = this.获取元素绝对坐标(element);
+                var Viewport = {
+                    X: absolutePosi.left - scrollLeft,
+                    Y: absolutePosi.top - scrollTop,
+                };
+                return Viewport;
+            },
+            获取文档元素(element) {
+                let docElement = {};
+                while (element.className != "protyle-content" && element) {
+                    element = element.parentElement;
+                }
+                docElement = element;
+                return docElement;
+            },
+
+
         },
-        computed:{
-            当前模板名称(){
+        computed: {
+            当前模板名称() {
                 let template = this.当前模板路径
-                return template.slice(template.lastIndexOf("\\")+1).split(".")[0]
+                return template.slice(template.lastIndexOf("\\") + 1).split(".")[0]
             }
         },
         watch: {
-            当前模板路径:{
-                async handler (val){
-                    if(val){
+            模板列表: {
+                async handler(val) {
+                    /*  console.log(val)
+                      this.模板预览列表=[]
+                      for(i=0;i<val.length;i++){
+                          let 模板 =JSON.parse(JSON.stringify(val[i]))
+                          模板DOM= await this.渲染模板dom(模板)
+                          this.模板预览列表[模板.path]=模板DOM
+                      }*/
+                },
+                deep: true
+            },
+            当前模板路径: {
+                async handler(val) {
+                    if (val) {
+
                         let id = this.$挂件自身元素().getAttribute("data-node-id")
                         this.$挂件自身元素().setAttribute("custom-template", val)
                         await 设置思源块属性(this.思源伺服ip, this.apitoken, id, "custom-template", val)
+                        let res = await this.渲染模板dom(val)
+                        this.当前模板dom = res.data.content
+                        this.挂载事件()
+
                     }
-                    
-                    }
-                },
-            模板添加方向:{
-                async handler (val){
-                    if(val){
+
+                }
+            },
+            模板添加方向: {
+                async handler(val) {
+                    if (val) {
                         let id = this.$挂件自身元素().getAttribute("data-node-id")
                         this.$挂件自身元素().setAttribute("custom-template-position", val)
                         await 设置思源块属性(this.思源伺服ip, this.apitoken, id, "custom-template-position", val)
                     }
-                    
-                    },
-                
+
+                },
+
             }
-           
+
         }
     }
     )
@@ -238,10 +393,15 @@
         font-family: var(--b3-font-family);
 
     }
-    html,#app,html span,.el-switch{
+
+    html,
+    #app,
+    html span,
+    .el-switch {
         background-color: transparent;
 
     }
+
     button,
     input {
         background-color: var(--b3-theme-surface-light) !important
@@ -274,8 +434,31 @@
         background-color: var(--b3-theme-background);
 
     }
-    li.el-select-dropdown__item{
+
+    div[contenteditable] {
+        background-color: transparent;
+    }
+
+    li.el-select-dropdown__item {
         max-width: calc(100vw - 20px);
         overflow-wrap: wrap;
+    }
+
+    .protyle-wysiwyg [data-node-id].li>.protyle-action,
+    .protyle-wysiwyg [data-node-id].li>.protyle-action svg {
+        display: flex;
+        height: 14px;
+        justify-content: center;
+
+        align-items: center;
+    }
+
+    .protyle-wysiwyg [data-node-id].li>.protyle-action {
+        height: 100%;
+
+    }
+
+    .protyle-wysiwyg div {
+        background-color: transparent
     }
 </style>
